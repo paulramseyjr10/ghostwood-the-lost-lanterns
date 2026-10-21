@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghostwood: The Lost Lanterns</title>
+<style>
+:root {
+  --site-primary: #6f62c7;
+  --site-on-primary: #ffffff;
+  --site-secondary: #183c3a;
+  --site-on-secondary: #f2f5d8;
+  --site-background: #101b24;
+  --site-on-background: #f2f5e8;
+  --site-font-body: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --site-font-heading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); background: var(--site-background); color: var(--site-on-background); }
+#app { min-height: 100vh; width: 100%; border-radius: 0; background: light-dark(#e9f0df, #101b24); color: light-dark(#18272a, #f2f5e8); padding: calc(16px * var(--site-spacing-scale)); }
+.shell { max-width: 1120px; margin: 0 auto; }
+header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding: 4px 0 14px; }
+.brand { display:flex; align-items:center; gap:12px; }
+.logo { width:44px;height:44px;display:grid;place-items:center;background:var(--site-primary);color:var(--site-on-primary);border:3px solid #101b24;box-shadow:4px 4px 0 #0b1016;font-size:25px; }
+h1 { font-size: calc(23px * var(--site-heading-scale)); margin:0; letter-spacing:-1px; }
+.subtitle { font-size:12px; opacity:.72; margin-top:4px; }
+.pill { background: light-dark(#d6e1d1,#203633); border:2px solid light-dark(#253b38,#7d9686); padding:8px 10px; font-size:11px; letter-spacing:1px; }
+.layout { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:14px; align-items:start; }
+.game-panel { min-width:0; background:light-dark(#d5e1d2,#17262c); padding:10px; border:3px solid light-dark(#203c3b,#7d9686); box-shadow:5px 5px 0 light-dark(#b0c3b3,#0a1116); }
+canvas { display:block; width:100%; aspect-ratio: 16 / 10; image-rendering:pixelated; background:#152a2a; border:3px solid #0d171c; outline:none; }
+.statusbar { display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;padding:10px 2px 1px; }
+.side { display:flex; flex-direction:column; gap:12px; }
+.card { background:light-dark(#f5f4e8,#1a292e); border:2px solid light-dark(#a6b8a9,#3c5c58); padding:14px; box-shadow:3px 3px 0 light-dark(#c1d0c0,#0b1418); }
+.card h2 { font-size:13px; letter-spacing:1px; margin:0 0 12px; }
+.big { font-size:27px; font-weight:900; color:light-dark(#5848a6,#bcb0ff); }
+.small { font-size:11px; line-height:1.7; opacity:.85; }
+.progress { height:9px;background:light-dark(#c4d0c3,#0d181d);margin-top:9px;border:1px solid light-dark(#8da394,#41615a); }
+.progress span { display:block;height:100%;width:0;background:#e5d36d;transition:width .15s; }
+button, select { font:inherit; color:var(--site-on-primary); background:var(--site-primary); border:2px solid light-dark(#27234d,#bdb4ff); padding:10px 12px; cursor:pointer; font-size:12px; font-weight:bold; }
+button:hover { filter:brightness(1.12); transform:translateY(-1px); }
+button:focus-visible,select:focus-visible { outline:3px solid #e5d36d; outline-offset:3px; }
+.controls { display:grid;grid-template-columns:1fr 1fr;gap:7px; }
+.controls button { width:100%; }
+.secondary { background:var(--site-secondary);color:var(--site-on-secondary);border-color:#6d9385; }
+.key { display:inline-block; border:1px solid currentColor; border-bottom-width:3px; padding:1px 4px; min-width:20px;text-align:center;font-size:10px; }
+.goal { display:flex;gap:9px;align-items:flex-start;margin:9px 0;font-size:11px;line-height:1.5; }
+.dot { width:14px;height:14px;flex:none;background:#e5d36d;border:2px solid #9d8d3d; }
+.notice { min-height:30px;font-size:11px;color:light-dark(#4c3b83,#d0c8ff);line-height:1.5;margin-top:10px; }
+.release { margin-top:14px; }
+.release h2 { margin-bottom:8px; }
+.release details { border-top:1px solid light-dark(#c1d0c0,#3c5c58); padding:9px 0; }
+.release summary { cursor:pointer; font-size:12px; font-weight:bold; }
+.release p,.release li { font-size:11px;line-height:1.7; }
+.release code { overflow-wrap:anywhere; }
+.touch-controls { display:none; grid-template-columns:repeat(3, minmax(48px, 1fr)); gap:6px; max-width:230px; margin:10px auto 2px; }
+.touch-controls button { min-height:54px; touch-action:none; user-select:none; font-size:1.15rem; border-radius:12px; box-shadow:0 3px 0 #111c22; }
+@media(max-width:520px){.touch-controls{max-width:290px;gap:8px}.touch-controls button{min-height:58px;font-size:1.25rem} .ability-controls{gap:8px}.ability-controls button{min-height:50px;font-size:.82rem} canvas{border-width:2px}}
+.ability-controls { display:grid;grid-template-columns:1fr 1fr;gap:7px;max-width:360px;margin:8px auto 2px; }
+.ability-controls button { min-height:44px;touch-action:manipulation; }
+footer { padding:16px 2px 3px;font-size:10px;opacity:.7;line-height:1.7; }
+@media(max-width:800px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.side .card:first-child{grid-column:1/-1}}
+@media(max-width:800px),(pointer:coarse){.touch-controls{display:grid}}
+@media(max-width:480px){#app{padding:10px}.side{grid-template-columns:1fr}.side .card:first-child{grid-column:auto}h1{font-size:19px}.game-panel{padding:6px}.pill{font-size:9px}}
+
+.menu-overlay{position:fixed;inset:0;z-index:20;background:rgba(7,15,22,.96);display:grid;place-items:center;padding:18px;overflow:auto}
+.menu-box{position:relative;overflow:hidden;width:min(900px,100%);background:radial-gradient(ellipse at 50% 0%,#2a4b54 0%,#172a30 58%,#111c28 100%);border:3px solid #8be7d4;box-shadow:0 0 24px #6cdbcf44,8px 8px 0 #080d12;padding:clamp(16px,3vw,30px);color:#f2f5e8;animation:menuRise .65s ease-out both}
+.menu-title{text-align:center;color:#b8f4ff;font-size:clamp(28px,5vw,48px);letter-spacing:3px;margin:0;text-shadow:0 0 8px #85e9ff,0 0 22px #85e9ff88;animation:titleGlow 3s ease-in-out infinite alternate}.menu-sub{text-align:center;color:#f5d98a;margin:8px 0 20px}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px}.menu-grid button{min-height:46px;box-shadow:0 3px 0 #0b1117;transition:transform .15s,filter .15s,box-shadow .15s}.menu-grid button:hover{box-shadow:0 0 14px #9bf2e688;transform:translateY(-2px)}.menu-tools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}.menu-tools button{background:#203b42;border-color:#70aaa3;color:#e9fffa}.menu-sparks{height:5px;margin:15px 0;background:linear-gradient(90deg,transparent,#6ee7d8,#ffe38c,#bba3ff,transparent);box-shadow:0 0 12px #7de8df;animation:sparkShift 4s linear infinite}@keyframes menuRise{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes titleGlow{from{filter:brightness(.9)}to{filter:brightness(1.25)}}@keyframes sparkShift{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(60deg)}}.menu-panel{margin-top:14px;background:#223b40;border:1px solid #5d7b78;padding:14px;line-height:1.6}.menu-panel h3{margin:0 0 8px;color:#ffe29a}.menu-panel button{margin:4px}.locked{opacity:.45;cursor:not-allowed}.menu-coins{text-align:center;color:#ffdc76;font-weight:bold;margin:10px}.menu-hide{display:none!important}.coin-badge{color:#ffdc76;font-weight:bold}
+@media(max-width:520px){.menu-box{padding:14px}.menu-grid{grid-template-columns:1fr 1fr}}
+/* Feature 4: celebratory level-complete panel */
+.level-modal{position:fixed;inset:0;z-index:35;display:none;place-items:center;padding:18px;background:rgba(4,10,18,.82);backdrop-filter:blur(5px)}
+.level-modal.show{display:grid;animation:modalFade .25s ease-out both}
+.level-modal-box{width:min(520px,100%);padding:clamp(20px,4vw,34px);text-align:center;background:radial-gradient(ellipse at top,#314e50,#14242c 72%);border:3px solid #ffe18b;box-shadow:0 0 28px #ffe18b55,8px 8px 0 #080d12;color:#f3f6e9}
+.level-modal-box h2{font-size:clamp(24px,5vw,38px);margin:0 0 8px;color:#ffe18b;text-shadow:0 0 15px #ffe18b55}
+.level-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0}
+.level-stat{padding:12px 5px;background:#203a40;border:1px solid #64857e}.level-stat b{display:block;font-size:22px;color:#bdf6eb}.level-stat span{font-size:10px;opacity:.8}
+.level-modal-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:9px}.level-modal-actions button{min-width:145px}
+@keyframes modalFade{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+
+/* Feature 1: animated haunted-forest intro */
+.intro-screen{position:fixed;inset:0;z-index:50;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 65%,#234a50 0%,#10252e 45%,#070d17 100%);color:#f3f6e9;transition:opacity .8s ease,visibility .8s ease}
+.intro-screen.intro-done{opacity:0;visibility:hidden;pointer-events:none}
+.intro-moon{position:absolute;width:clamp(90px,17vw,190px);aspect-ratio:1;border-radius:50%;right:14%;top:9%;background:radial-gradient(circle at 35% 30%,#fff8d5,#b9d7d6 45%,#7a9da8 75%);box-shadow:0 0 55px #b6edff55;animation:moonBreathe 4s ease-in-out infinite alternate}
+.intro-fog{position:absolute;inset:35% -30% 0;background:linear-gradient(transparent,#b4e7df18 35%,#b4e7df08 65%,transparent);filter:blur(20px);animation:fogDrift 8s ease-in-out infinite alternate}
+.intro-forest{position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(transparent,#071017 88%);clip-path:polygon(0 28%,8% 12%,15% 35%,22% 5%,29% 30%,38% 12%,47% 36%,56% 8%,64% 31%,72% 4%,81% 29%,90% 11%,100% 30%,100% 100%,0 100%)}
+.intro-lanterns{position:absolute;inset:0;pointer-events:none}
+.intro-lantern{position:absolute;width:12px;height:18px;border-radius:3px;background:#ffe68a;box-shadow:0 0 10px 5px #ffdf7080,0 0 32px 10px #ffdc5035;animation:lanternPulse 1.8s ease-in-out infinite alternate}
+.intro-lantern:before{content:"";position:absolute;left:3px;top:-5px;width:6px;height:5px;border:2px solid #d9b65c;border-bottom:0;border-radius:5px 5px 0 0}
+.intro-content{position:relative;z-index:2;text-align:center;padding:24px;width:min(760px,100%);animation:introReveal 1.1s ease-out both}
+.intro-kicker{letter-spacing:5px;font-size:clamp(10px,2vw,14px);color:#b4f4e7;text-transform:uppercase}
+.intro-heading{margin:14px 0 8px;font-size:clamp(34px,8vw,76px);line-height:1.05;letter-spacing:3px;color:#c7f8ff;text-shadow:0 0 10px #8beaff,0 0 30px #50bcd6aa,4px 5px 0 #152a3a;animation:introTitleGlow 2.6s ease-in-out infinite alternate}
+.intro-subtitle{color:#f4d88d;letter-spacing:2px;font-size:clamp(11px,2.2vw,16px);margin-bottom:28px}
+.intro-enter{min-width:210px;background:#6f62c7;border:2px solid #b8f4ff;color:#fff;padding:14px 22px;box-shadow:0 0 18px #7de8df66,4px 4px 0 #080d12;letter-spacing:1px}
+.intro-hint{margin-top:14px;font-size:10px;letter-spacing:2px;color:#d6e5e0;opacity:.8}
+@keyframes moonBreathe{from{transform:scale(.96);filter:brightness(.88)}to{transform:scale(1.04);filter:brightness(1.12)}}
+@keyframes fogDrift{from{transform:translateX(-7%) translateY(4%)}to{transform:translateX(8%) translateY(-4%)}}
+@keyframes lanternPulse{from{filter:brightness(.75);transform:translateY(2px)}to{filter:brightness(1.35);transform:translateY(-5px)}}
+@keyframes introReveal{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes introTitleGlow{from{filter:brightness(.85)}to{filter:brightness(1.25)}}
+@media(prefers-reduced-motion:reduce){.intro-screen *{animation:none!important;transition:none!important}}
+
+</style>
+</head>
+<body>
+<div id="introScreen" class="intro-screen" role="dialog" aria-modal="true" aria-label="Ghostwood animated intro">
+  <div class="intro-moon" aria-hidden="true"></div><div class="intro-fog" aria-hidden="true"></div><div class="intro-forest" aria-hidden="true"></div>
+  <div class="intro-lanterns" aria-hidden="true"><i class="intro-lantern" style="left:12%;top:63%;animation-delay:.2s"></i><i class="intro-lantern" style="left:24%;top:75%;animation-delay:1s"></i><i class="intro-lantern" style="left:38%;top:67%;animation-delay:.5s"></i><i class="intro-lantern" style="left:64%;top:73%;animation-delay:1.2s"></i><i class="intro-lantern" style="left:78%;top:61%;animation-delay:.8s"></i><i class="intro-lantern" style="left:89%;top:78%;animation-delay:.1s"></i></div>
+  <div class="intro-content"><div class="intro-kicker">A haunted pixel adventure</div><h1 class="intro-heading">👻 GHOSTWOOD</h1><div class="intro-subtitle">THE LOST LANTERNS</div><button id="introEnter" class="intro-enter">🏮 ENTER THE WOODS</button><div class="intro-hint">THE FOREST IS WAITING · CLICK TO SKIP</div></div>
+</div>
+<div id="app" data-sites-preview-theme="custom">
+  <div class="shell">
+    <header>
+      <div class="brand"><div class="logo">👻</div><div><h1>GHOSTWOOD</h1><div class="subtitle">THE LOST LANTERNS · A PIXEL ART ADVENTURE</div></div></div>
+      <div class="pill" id="levelBadge">LEVEL 1 / 100 &nbsp;·&nbsp; MOONLIT GROVE</div>
+    </header>
+    <div id="mainMenu" class="menu-overlay" role="dialog" aria-modal="true" aria-label="Ghostwood main menu">
+      <div class="menu-box"><h1 class="menu-title">👻 GHOSTWOOD</h1><div class="menu-sub">✦ THE LOST LANTERNS · A HAUNTED PIXEL ADVENTURE ✦</div><div class="menu-sparks"></div>
+        <div class="menu-coins">🪙 Ghost Coins: <span id="menuCoins">0</span> · Levels unlocked: <span id="menuUnlocked">1</span>/100</div>
+        <div class="menu-grid">
+          <button id="menuPlay">▶ PLAY ADVENTURE</button><button id="menuLevels" class="secondary">🗺 LEVEL SELECT</button><button id="menuUpgrades" class="secondary">⭐ UPGRADES</button><button id="menuShop" class="secondary">🪙 COIN SHOP</button><button id="menuCostumes" class="secondary">🧥 CHARACTER SHOP</button><button id="menuInventory" class="secondary">🎒 INVENTORY</button><button id="menuAchievements" class="secondary">🏆 ACHIEVEMENTS</button><button id="menuHow" class="secondary">📖 HOW TO PLAY</button>
+        </div>
+        <div class="menu-tools"><button id="soundToggle" aria-pressed="false">🔊 SOUND: OFF</button><button id="musicToggle" aria-pressed="false">🎵 MUSIC: OFF</button></div>
+        <div id="menuPanel" class="menu-panel"><h3>Welcome, Lantern Keeper!</h3>Explore the haunted forest, collect glowing lanterns, earn Ghost Coins, and upgrade your abilities. Beat each level to unlock the next — you cannot skip ahead. <b>100 haunted levels await — can you reach the final lantern?</b></div>
+      </div>
+    </div>
+    <main class="layout">
+      <section class="game-panel" aria-label="Game area">
+        <canvas id="game" width="640" height="400" tabindex="0" aria-label="Ghostwood game. Move with WASD or arrow keys. Collect glowing lanterns and reach the portal."></canvas>
+        <div class="statusbar"><span id="where">LOCATION: MOONLIT GROVE</span><span id="lives">♥ ♥ ♥</span><span id="modeLabel">1 PLAYER</span></div>
+        <div class="touch-controls" aria-label="Touch movement controls"><span></span><button data-move="w" aria-label="Move up">▲</button><span></span><button data-move="a" aria-label="Move left">◀</button><button data-move="s" aria-label="Move down">▼</button><button data-move="d" aria-label="Move right">▶</button></div>
+        <div class="ability-controls" aria-label="Special abilities"><button id="dashBtn">💨 SPIRIT DASH</button><button id="pulseBtn" class="secondary">✨ GHOST PULSE</button></div>
+      </section>
+      <aside class="side">
+        <section class="card"><h2>✦ LOST LANTERNS</h2><div><span class="big" id="count">0</span> <span style="opacity:.7">/ <span id="totalLanterns">8</span> found</span></div><div class="progress"><span id="bar"></span></div><p class="small" id="mission">Collect every lantern in the level, avoid the wraiths, then unlock the old gate.</p><div class="notice" id="notice" role="status">Find the glowing lanterns scattered through the woods.</div></section>
+        <section class="card"><h2>✨ POWER-UPS & ABILITIES</h2><div class="small"><p><b>💨 Spirit Dash</b> — press Shift or tap the dash button to burst forward. Cooldown: 4 seconds.</p><p><b>✨ Ghost Pulse</b> — press Space or tap the pulse button to push nearby wraiths away. Cooldown: 8 seconds.</p><p><b>🟡 Speed Spark</b> — collect a golden spark to move faster for a short time.</p><p><b>🛡 Spirit Shield</b> — collect a blue shield orb to block one wraith hit.</p></div><div class="notice" id="abilityStatus" role="status">Abilities ready. Look for glowing power-ups!</div></section>
+        <section class="card"><h2>⌨ CONTROLS</h2><div class="small"><p><b>PLAYER 1</b><br><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> or arrow keys</p><p><b>PLAYER 2</b><br><span class="key">I</span> <span class="key">J</span> <span class="key">K</span> <span class="key">L</span></p><p>Walk through the world, collect lanterns, avoid wandering wraiths, and reach the purple portal.</p></div></section>
+        <section class="card"><h2>✧ ADVENTURE</h2><div class="controls"><button id="two" class="secondary">2 PLAYER</button><button id="restart">↻ RESTART</button><button id="map" class="secondary">MAP: ON</button><button id="pause" class="secondary">Ⅱ PAUSE</button><button id="nextLevel" style="display:none;grid-column:1/-1">NEXT LEVEL ➜</button></div><p class="small" style="margin-bottom:0">Beat each haunted area to unlock the next. Two players can explore on one keyboard; online play is not connected in this prototype.</p></section>
+      </aside>
+    </main>
+    <section class="card release" aria-label="Release and credits information">
+      <h2>📱 MOBILE RELEASE KIT</h2>
+      <p>This is the playable browser prototype. The information below helps you prepare a mobile release; it does not mean an Android or iPhone app has already been built or tested.</p>
+      <details><summary>Build and export checklist</summary><ol><li>Keep this HTML as the self-contained web build and test it on desktop and mobile browsers.</li><li>For Android, wrap the web game in a trusted mobile web container or port it to a game engine, then build and test a signed Android App Bundle (AAB) for store submission.</li><li>For iPhone, create an iOS project in a supported toolchain on a Mac, configure signing, test on real devices, and archive the app for App Store Connect.</li><li>Set the final app identifier, version, icons, launch screen, orientation, touch controls, accessibility, privacy disclosures, and store screenshots before release.</li><li>Test on real devices, including pause/resume, backgrounding, performance, safe areas, audio, and all win/lose/restart paths.</li></ol></details>
+      <details><summary>Credits and licensing</summary><p><b>Game concept and code:</b> original prototype created for this project with AI assistance. <b>Pixel-art visuals:</b> drawn procedurally with canvas shapes; no third-party image pack is intentionally included. <b>Audio:</b> synthesized in-browser using Web Audio; no external audio files included. <b>Fonts:</b> system monospace fonts only.</p><p>Before publishing, review the final code and any assets you add, keep a copy of this project’s source, and include accurate credits for any outside libraries, fonts, music, or art you later use. This note is not a legal license or a guarantee of rights clearance.</p></details>
+      <details><summary>Store readiness and known limitations</summary><ul><li>Online multiplayer is not implemented; the current two-player mode is local keyboard co-op.</li><li>The world and obstacle layout are randomized at each restart, so the playfield may vary.</li><li>Touch movement controls are provided in this prototype, but mobile usability still needs real-device testing.</li><li>No native Android APK/AAB, iOS archive, store listing, privacy policy, or signed release has been produced yet.</li><li>Check the current store age-rating, privacy, account, payment, and submission requirements with a parent or guardian before publishing.</li></ul></details>
+    </section>
+    <section class="card release" aria-label="Mobile testing plan">
+      <h2>🧪 MOBILE TEST BUILD PLAN</h2>
+      <p><b>Status: browser prototype only.</b> No Android APK/AAB or iOS app archive has been built, signed, or device-tested yet. These are preparation notes, not exported build files.</p>
+      <details><summary>Suggested project structure</summary><pre><code>Ghostwood-Mobile/
+  web/index.html
+  web/assets/   (create app icons here)
+  android/      (generated native project)
+  ios/          (generated Xcode project)
+  README.md
+  CREDITS.md
+  TEST-PLAN.md</code></pre><p>The game currently draws its pixel art with canvas code and uses system fonts. There are no separate artwork or audio files to export. The icon and native project folders above are placeholders, not generated assets.</p></details>
+      <details><summary>Device test checklist</summary><ul><li>Verify smooth movement, level-scaled lantern pickups, portal lock/unlock, smarter wraith chasing, lives, the level-complete panel, defeat, restart, pause, costumes, and map toggle.</li><li>Check touch buttons on Android and iPhone, including releasing a button when a finger slides away or the app loses focus.</li><li>Test screen rotation, safe areas, background/resume, performance, and readable text on small screens.</li><li>Record device model, OS version, pass/fail, and bugs before sharing a test build.</li></ul></details>
+      <details><summary>Builds and accounts still needed</summary><p><b>Android:</b> use a mobile wrapper or game engine, create a native project, test on an Android device, then build/sign an AAB using Android development tools. A developer account is needed for store distribution.</p><p><b>iPhone:</b> create an iOS project, build and sign with Apple's supported tools on a Mac, test on real devices, and upload a build for TestFlight testing. Apple developer services and signing setup may be required.</p><p>Neither platform's installable app is generated by this checklist. Store requirements can change; check the official documentation before submitting.</p></details>
+    </section>
+    <footer>TIP: Trees and tombstones block your path. Lanterns glow through the fog. Collect every lantern to wake the ancient gate. More lanterns, wraiths, and power-ups appear as you progress. Every 10th level features a guardian boss, with tougher guardians in later regions. Your unlocked levels, coins, and upgrades are saved in this browser on this device.</footer>
+  </div>
+</div>
+<div id="levelModal" class="level-modal" role="dialog" aria-modal="true" aria-labelledby="levelModalTitle">
+  <div class="level-modal-box"><div style="font-size:42px;margin-bottom:6px">🏮 ✨ 👻</div><h2 id="levelModalTitle">LEVEL COMPLETE!</h2><p id="levelModalMessage">The lanterns are safe. The forest grows quieter.</p>
+    <div class="level-stats"><div class="level-stat"><b id="modalLanterns">0/0</b><span>LANTERNS</span></div><div class="level-stat"><b id="modalCoins">+50</b><span>COINS EARNED</span></div><div class="level-stat"><b id="modalLevel">2/100</b><span>NEXT LEVEL</span></div></div>
+    <div class="level-modal-actions"><button id="modalContinue">NEXT LEVEL ➜</button><button id="modalMenu" class="secondary">MAIN MENU</button></div>
+  </div>
+</div>
+<script>
+(() => {
+  // Original synthesized sound effects and ambient music; no external audio files needed.
+  let audioCtx=null, soundOn=false, musicOn=false, musicTimer=null, musicStep=0;
+  function audioReady(){if(!audioCtx){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audioCtx=new AC();}if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
+  function tone(freq,duration=.12,wave='sine',volume=.035,delay=0){if(!soundOn)return;const ac=audioReady();if(!ac)return;const o=ac.createOscillator(),g=ac.createGain();o.type=wave;o.frequency.setValueAtTime(freq,ac.currentTime+delay);g.gain.setValueAtTime(.0001,ac.currentTime+delay);g.gain.exponentialRampToValueAtTime(volume,ac.currentTime+delay+.015);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+delay+duration);o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+delay);o.stop(ac.currentTime+delay+duration+.03);}
+  function sfx(kind){if(!soundOn)return;const notes={click:[[520,.06,'square',.018]],pickup:[[740,.10,'sine',.04],[990,.15,'sine',.035,.07]],dash:[[180,.12,'sawtooth',.025],[420,.16,'triangle',.025,.04]],pulse:[[220,.2,'sine',.04],[330,.24,'sine',.025,.06],[490,.18,'sine',.02,.12]],win:[[523,.15,'sine',.035],[659,.15,'sine',.035,.12],[784,.25,'sine',.04,.24]],hit:[[160,.2,'triangle',.035],[110,.24,'sawtooth',.025,.08]],power:[[650,.1,'triangle',.03],[880,.16,'sine',.03,.08]]};for(const n of(notes[kind]||[]))tone(...n);}
+
+  // Intro animation runs before the existing menu; it can be skipped immediately.
+  const introScreen=document.getElementById('introScreen');
+  function closeIntro(){if(!introScreen||introScreen.classList.contains('intro-done'))return;introScreen.classList.add('intro-done');if(soundOn)sfx('win');}
+  document.getElementById('introEnter').addEventListener('click',closeIntro);
+  const introTimer=setTimeout(closeIntro,6500);
+  introScreen.addEventListener('transitionend',()=>{if(introScreen.classList.contains('intro-done'))introScreen.setAttribute('aria-hidden','true');});
+  function stopMusic(){if(musicTimer){clearInterval(musicTimer);musicTimer=null;}}
+  function startMusic(){stopMusic();if(!musicOn)return;audioReady();const tune=[196,246.94,293.66,246.94,174.61,220,261.63,220];musicTimer=setInterval(()=>{if(!musicOn||!soundOn)return;const f=tune[musicStep++%tune.length];tone(f,.65,'sine',.012);tone(f*1.5,.5,'triangle',.006,.08);},620);}
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const TILE = 20, W = 64, H = 48;
+  let world, players, lanterns, wraiths, powerups, keys = {}, twoPlayers = false, showMap = true, paused = false, won = false, lost = false, frame = 0, lastTime = 0, camera = {x:0,y:0}, levelIndex = 0, dashCooldown = 0, pulseCooldown = 0, speedBoost = 0, shieldCharges = 0, rewardedLevel=false, levelStarted=false;
+  const LEVELS = [
+    {name:'MOONLIT GROVE', description:'Find the lanterns in the quiet grove.', wallChance:.115, wraiths:5, spots:[[15,7],[28,8],[43,7],[56,16],[49,29],[36,39],[20,35],[8,23]], floorA:'#24453c',floorB:'#294b40',tree:'#183d3a',treeTop:'#24534a'},
+    {name:'WHISPERING WOODS', description:'The woods are darker. Find every lantern and avoid the wraiths.', wallChance:.145, wraiths:8, spots:[[14,12],[25,6],[39,10],[54,12],[56,28],[43,36],[28,40],[10,31]], floorA:'#293a38',floorB:'#304740',tree:'#203c36',treeTop:'#31564a'},
+    {name:'OLD GRAVEYARD', description:'The final area is crowded with restless wraiths. Find every lantern!', wallChance:.17, wraiths:11, spots:[[17,6],[32,6],[47,10],[56,22],[48,35],[34,41],[17,37],[7,21]], floorA:'#343244',floorB:'#3c394c',tree:'#292b43',treeTop:'#45405c'}
+  ];
+  const AREA_NAMES = ['MOONLIT GROVE','WHISPERING WOODS','OLD GRAVEYARD','FROSTBITE HOLLOW','WITCHLIGHT MARSH','SUNKEN CATACOMBS','CROWKEEP RUINS','SHADOWFALL RIDGE','HAUNTED CITADEL','SHADOW REALM','EMBERROOT FOREST','CRYSTAL CRYPTS','THUNDER MOOR','THE WEEPING PINES','BLACKWATER BAYOU','RAVEN QUEEN’S KEEP','THE FORGOTTEN KINGDOM','STARLESS ABYSS','LANTERNFALL PEAKS','THE ETERNAL NIGHT'];
+  const extraLanternSpots = [[12,12],[22,15],[34,14],[45,18],[18,25],[30,27],[42,27],[53,35],[13,39],[25,42],[39,42],[56,8],[8,17],[36,6],[51,24],[25,33],[44,6],[6,34],[58,40],[32,19],[16,17],[27,11],[39,20],[48,24],[10,28],[20,31],[33,34],[46,39],[57,17],[7,12],[14,43],[23,6],[35,24],[41,8],[52,32],[29,37]];
+  function lanternSpotsForLevel(templateSpots, levelNumber){
+    // Start with the template lanterns, then add 2 more every 3 levels across the 100-level campaign.
+    const targetCount = 5 + 2 * Math.floor((levelNumber - 1) / 3);
+    const spots = templateSpots.slice(0, targetCount).map(x => x.slice());
+    const candidates = extraLanternSpots.map((spot, i) => ({spot, sort: (i * 7 + levelNumber * 11) % extraLanternSpots.length})).sort((a,b) => a.sort-b.sort);
+    for (const item of candidates) {
+      if (spots.length >= targetCount) break;
+      const [x,y] = item.spot;
+      if (!spots.some(([sx,sy]) => Math.abs(sx-x) < 3 && Math.abs(sy-y) < 3)) spots.push([x,y]);
+    }
+    // If a late level needs more than the hand-picked locations, spread extras across open map tiles.
+    for (let k=0; spots.length < targetCount && k<2000; k++) {
+      const x = 4 + ((k * 13 + levelNumber * 5) % 56);
+      const y = 4 + ((k * 17 + levelNumber * 3) % 40);
+      if (!spots.some(([sx,sy]) => Math.abs(sx-x) < 2 && Math.abs(sy-y) < 2)) spots.push([x,y]);
+    }
+    return spots;
+  }
+  for (let i=0; i<3; i++) {
+    LEVELS[i].spots = lanternSpotsForLevel(LEVELS[i].spots, i+1);
+    LEVELS[i].description = `Level ${i+1}: collect ${LEVELS[i].spots.length} lanterns, defeat the ghosts, and reach the gate.`;
+  }
+  for(let n=3;n<100;n++){
+    const template=LEVELS[n%3], area=AREA_NAMES[Math.min(AREA_NAMES.length-1,Math.floor(n/5))];
+    const spots=lanternSpotsForLevel(template.spots, n+1);
+    LEVELS.push({...template,name:(n===99?'THE ETERNAL LANTERN KING':(n%10===9?'GUARDIAN’S TRIAL · '+String(n+1).padStart(2,'0'):area+' · '+String(n+1).padStart(2,'0'))),description:`Level ${n+1}: collect ${spots.length} lanterns, defeat the ghosts, and reach the gate.`,wallChance:Math.min(.24,template.wallChance+n*.0012),wraiths:Math.min(32,template.wraiths+Math.floor(n*.65)),spots});
+  }
+  const SAVE_KEY='ghostwood_progress_v2';
+  let save={coins:0,unlocked:1,completed:[],upgrades:{health:0,speed:0,dash:0,pulse:0},lanterns:0,ghosts:0,costume:'lantern-keeper',ownedCostumes:['lantern-keeper']};
+  try{save={...save,...JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')};save.upgrades={health:0,speed:0,dash:0,pulse:0,...(save.upgrades||{})};save.ownedCostumes=Array.isArray(save.ownedCostumes)?save.ownedCostumes:['lantern-keeper'];if(!save.ownedCostumes.includes('lantern-keeper'))save.ownedCostumes.push('lantern-keeper');if(!save.costume)save.costume='lantern-keeper';}catch(e){}
+  function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){} syncMenuStats();}
+  function syncMenuStats(){const c=document.getElementById('menuCoins'),u=document.getElementById('menuUnlocked');if(c)c.textContent=save.coins;if(u)u.textContent=save.unlocked;}
+  function earnCoins(n,reason){save.coins+=n;persist();notice.textContent=`+${n} Ghost Coins — ${reason}!`;}
+  function upgradeCost(type){return ({health:100,speed:150,dash:200,pulse:250})[type]+(save.upgrades[type]||0)*100;}
+  const countEl = document.getElementById('count'), bar = document.getElementById('bar'), notice = document.getElementById('notice'), where = document.getElementById('where'), livesEl = document.getElementById('lives'), modeLabel = document.getElementById('modeLabel'), mission = document.getElementById('mission'), levelBadge = document.getElementById('levelBadge'), totalLanterns = document.getElementById('totalLanterns'), nextLevelBtn = document.getElementById('nextLevel'), abilityStatus = document.getElementById('abilityStatus'), dashBtn = document.getElementById('dashBtn'), pulseBtn = document.getElementById('pulseBtn');
+  const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const dist = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
+  const COSTUMES={ 'lantern-keeper':{name:'Lantern Keeper',price:0,color:'#b8f4e6',accent:'#5bb6a9',description:'The original forest explorer.'},'moon-guard':{name:'Moon Guard',price:180,color:'#d5e4ff',accent:'#6e8de0',description:'Silver-blue armor under moonlight.'},'ember-witch':{name:'Ember Witch',price:260,color:'#ffbd8a',accent:'#cf5b48',description:'Warm ember colors with a fiery accent.'},'shadow-scout':{name:'Shadow Scout',price:350,color:'#d4c4ff',accent:'#7553a8',description:'A mysterious violet forest outfit.'},'moss-knight':{name:'Moss Knight',price:450,color:'#d6e99a',accent:'#678c43',description:'Ancient green armor from the deep woods.'} };
+  function applyCostumeToPlayers(){const skin=COSTUMES[save.costume]||COSTUMES['lantern-keeper'];if(players&&players[0]){players[0].color=skin.color;players[0].accent=skin.accent;}}
+  function reset(){
+    levelIndex=Math.max(0,Math.min(LEVELS.length-1,levelIndex));
+    if(levelIndex>=save.unlocked){levelIndex=save.unlocked-1;}
+    const level = LEVELS[levelIndex];
+    rewardedLevel=false;
+    world = Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>{
+      if(x===0||y===0||x===W-1||y===H-1) return 1;
+      return Math.random()<level.wallChance ? 1 : 0;
+    }));
+    // Winding clear paths through the forest.
+    for(let x=2;x<W-2;x++){ let y=Math.floor(H/2+Math.sin(x*.21)*6); for(let d=-1;d<=1;d++) world[Math.max(1,Math.min(H-2,y+d))][x]=0; }
+    for(let y=2;y<H-2;y++){let x=Math.floor(W/2+Math.sin(y*.24)*8);for(let d=-1;d<=1;d++)world[y][Math.max(1,Math.min(W-2,x+d))]=0;}
+    // Safe starting clearing and portal clearing.
+    for(let y=3;y<10;y++)for(let x=3;x<12;x++)world[y][x]=0;
+    for(let y=H-10;y<H-3;y++)for(let x=W-12;x<W-3;x++)world[y][x]=0;
+    for(const [tx,ty] of level.spots)for(let yy=ty-1;yy<=ty+1;yy++)for(let xx=tx-1;xx<=tx+1;xx++)if(xx>0&&yy>0&&xx<W-1&&yy<H-1)world[yy][xx]=0;
+    players=[{x:6.5*TILE,y:6.5*TILE,color:'#b8f4e6',accent:'#5bb6a9',lives:3+(save.upgrades.health||0),face:1,step:0},{x:8*TILE,y:7*TILE,color:'#ffd5f0',accent:'#bd77c5',lives:3+(save.upgrades.health||0),face:1,step:0}];applyCostumeToPlayers();
+    lanterns=[];
+    level.spots.forEach(([tx,ty],i)=>lanterns.push({x:tx*TILE+10,y:ty*TILE+10,got:false,phase:i*1.7}));
+    wraiths=[];
+    // Wraiths grow in number every three levels, while their speed rises gently.
+    const ghostCount=Math.min(32,5+2*Math.floor(levelIndex/3));
+    for(let i=0;i<ghostCount;i++){let tx=rand(14,W-14),ty=rand(10,H-10); if(world[ty][tx]===1){tx=30;ty=20;} wraiths.push({x:tx*TILE+10,y:ty*TILE+10,phase:i*2,type:i%3,spd:Math.min(68,(22+levelIndex*0.8+Math.random()*12)*(i%3===1?1.18:i%3===2?.86:1)),dx:Math.random()*2-1,dy:Math.random()*2-1});}
+    // Every tenth level ends with a guardian boss protecting the lost lantern gate.
+    boss = ((levelIndex + 1) % 10 === 0) ? {x:(W-9)*TILE+10,y:(H-9)*TILE+10,hp:3+Math.floor(levelIndex/10),maxHp:3+Math.floor(levelIndex/10),spd:24+levelIndex*.45,phase:0,hitFlash:0,defeated:false,name:['THE ROOT WARDEN','THE MOON EATER','THE GRAVE TITAN','THE FOG KING','THE LOST LANTERN KING','THE EMBER COLOSSUS','THE CRYSTAL DEVOURER','THE RAVEN EMPRESS','THE STARLESS BEAST','THE ETERNAL LANTERN KING'][Math.min(9,Math.floor(levelIndex/10))]} : null;
+    // More helpful power-ups appear as the campaign gets harder.
+    powerups=[];
+    const powerupCount=Math.min(12,4+Math.floor(levelIndex/5));
+    const powerTypes=Array.from({length:powerupCount},(_,i)=>i%2===0?'speed':'shield');
+    for(let i=0;i<powerTypes.length;i++){let [tx,ty]=level.spots[(i*2+1)%level.spots.length];powerups.push({x:tx*TILE+10,y:ty*TILE+10,type:powerTypes[i],phase:i*1.8,got:false});}
+    dashCooldown=0;pulseCooldown=0;speedBoost=0;shieldCharges=0;
+    frame=0;paused=false;won=false;lost=false;keys={};document.getElementById('levelModal').classList.remove('show');
+    document.getElementById('pause').textContent='Ⅱ PAUSE';
+    nextLevelBtn.style.display='none';
+    nextLevelBtn.textContent=levelIndex===LEVELS.length-1?'PLAY AGAIN ↻':'NEXT LEVEL ➜';
+    levelBadge.innerHTML='LEVEL '+(levelIndex+1)+' / '+LEVELS.length+' &nbsp;·&nbsp; '+level.name;
+    totalLanterns.textContent=lanterns.length;
+    notice.textContent='Find the glowing lanterns in '+level.name.toLowerCase()+'.';
+    mission.textContent=boss?'BOSS LEVEL: collect every lantern, then defeat '+boss.name+' with Ghost Pulse to unlock the gate.':level.description;
+    abilityStatus.textContent='Abilities ready. Look for glowing power-ups!';
+    updateAbilityUI();
+    updateUI();
+  }
+  function solid(px,py){let tx=Math.floor(px/TILE),ty=Math.floor(py/TILE);return tx<0||ty<0||tx>=W||ty>=H||world[ty][tx]===1;}
+  function move(p,dx,dy,dt){
+    // Responsive acceleration and friction give movement a smoother, less grid-like feel.
+    const maxSpeed=112*(1+(save.upgrades.speed||0)*.12)*(speedBoost>0?1.65:1);
+    p.vx=p.vx||0;p.vy=p.vy||0;
+    const accel=dx||dy?maxSpeed*9: maxSpeed*12;
+    p.vx+=dx*accel*dt;p.vy+=dy*accel*dt;
+    if(!dx)p.vx*=Math.max(0,1-9*dt);if(!dy)p.vy*=Math.max(0,1-9*dt);
+    const v=Math.hypot(p.vx,p.vy);if(v>maxSpeed){p.vx=p.vx/v*maxSpeed;p.vy=p.vy/v*maxSpeed;}
+    const nx=p.x+p.vx*dt,ny=p.y+p.vy*dt,r=5;
+    if(!solid(nx-r,p.y-r)&&!solid(nx+r,p.y+r))p.x=nx;else p.vx=0;
+    if(!solid(p.x-r,ny-r)&&!solid(p.x+r,ny+r))p.y=ny;else p.vy=0;
+    if(dx||dy){p.face=dx||p.face;p.step+=dt*(v>10?14:5);}
+  }
+  function update(dt){
+    if(paused||won||lost)return;
+    frame+=dt;
+    dashCooldown=Math.max(0,dashCooldown-dt);pulseCooldown=Math.max(0,pulseCooldown-dt);speedBoost=Math.max(0,speedBoost-dt);
+    const p1=players[0], p2=players[1];
+    let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+    let len=Math.hypot(dx,dy)||1;move(p1,dx/len,dy/len,dt);
+    if(twoPlayers){dx=(keys.l?1:0)-(keys.j?1:0);dy=(keys.k?1:0)-(keys.i?1:0);len=Math.hypot(dx,dy)||1;move(p2,dx/len,dy/len,dt);}
+    for(const l of lanterns){if(l.got)continue;for(let i=0;i<(twoPlayers?2:1);i++)if(dist(players[i],l)<17){l.got=true;sfx('pickup');save.lanterns=(save.lanterns||0)+1;earnCoins(10,'lantern collected');updateUI();}}
+    for(const item of powerups){if(item.got)continue;for(let i=0;i<(twoPlayers?2:1);i++)if(dist(players[i],item)<17){item.got=true;sfx('power');if(item.type==='speed'){speedBoost=7;notice.textContent='Speed Spark! You move faster for 7 seconds.';}else{shieldCharges=Math.min(2,shieldCharges+1);notice.textContent='Spirit Shield collected! It blocks one wraith hit.';}abilityStatus.textContent=item.type==='speed'?'Speed Spark active!':'Spirit Shield charges: '+shieldCharges;}}
+    const target=lanterns.every(l=>l.got);
+    for(const g of wraiths){
+      let targetP=players[0];if(twoPlayers&&dist(players[1],g)<dist(players[0],g))targetP=players[1];
+      const d=dist(targetP,g);g.brain=(g.brain||0)+dt;
+      // Wraiths patrol at a distance, investigate nearby players, and actively chase when close.
+      if(d<230){const lead=Math.min(.42,d/420);const tx=targetP.x+(targetP.vx||0)*lead,ty=targetP.y+(targetP.vy||0)*lead,dd=Math.hypot(tx-g.x,ty-g.y)||1;g.dx=(tx-g.x)/dd;g.dy=(ty-g.y)/dd;}
+      else if(g.brain>1.25){g.brain=0;const angle=Math.atan2(g.dy||1,g.dx||1)+(Math.random()-.5)*1.8;g.dx=Math.cos(angle);g.dy=Math.sin(angle);}
+      const oldx=g.x,oldy=g.y;g.x+=g.dx*g.spd*dt;g.y+=g.dy*g.spd*dt;
+      if(solid(g.x,g.y)){g.x=oldx;g.y=oldy;const turn=(Math.random()<.5?-1:1)*Math.PI/2,angle=Math.atan2(g.dy,g.dx)+turn;g.dx=Math.cos(angle);g.dy=Math.sin(angle);}
+      g.phase+=dt*(d<150?7:3);
+      for(let i=0;i<(twoPlayers?2:1);i++){const p=players[i];if(dist(p,g)<13&&frame-(p.lastHit||-10)>1.25){p.lastHit=frame;sfx('hit');if(shieldCharges>0){shieldCharges--;g.dx=(g.x-p.x)/(dist(p,g)||1);g.dy=(g.y-p.y)/(dist(p,g)||1);notice.textContent='Spirit Shield blocked the wraith! Charges left: '+shieldCharges;abilityStatus.textContent='Spirit Shield charges: '+shieldCharges;}else{p.lives--;notice.textContent='A wraith caught you! Keep moving and watch the fog.';if(p.lives<=0){lost=true;notice.textContent='The forest claimed this run. Restart and try again.';}updateUI();}}}
+    }
+    if(boss && !boss.defeated){
+      boss.phase+=dt*2.2; boss.hitFlash=Math.max(0,boss.hitFlash-dt);
+      const targetP=twoPlayers&&dist(players[1],boss)<dist(players[0],boss)?players[1]:players[0];
+      const d=dist(targetP,boss),len=d||1;
+      if(d>28){const ox=boss.x,oy=boss.y;boss.x+=(targetP.x-boss.x)/len*boss.spd*dt;boss.y+=(targetP.y-boss.y)/len*boss.spd*dt;if(solid(boss.x,boss.y)){boss.x=ox;boss.y=oy;}}
+      for(let i=0;i<(twoPlayers?2:1);i++){const p=players[i];if(dist(p,boss)<22&&frame-(p.bossLastHit||-10)>1.4){p.bossLastHit=frame;sfx('hit');if(shieldCharges>0){shieldCharges--;notice.textContent='The guardian strikes your Spirit Shield!';}else{p.lives--;notice.textContent='The guardian hit you! Keep moving!';if(p.lives<=0)lost=true;updateUI();}}}
+    }
+    const gate={x:(W-6)*TILE+10,y:(H-6)*TILE+10};
+    for(let i=0;i<(twoPlayers?2:1);i++)if(dist(players[i],gate)<22){if(target && (!boss || boss.defeated)){won=true;sfx('win');nextLevelBtn.style.display='block';nextLevelBtn.textContent=levelIndex===LEVELS.length-1?'FINISH ADVENTURE ✓':'NEXT LEVEL ➜';let reward=0;if(!rewardedLevel){rewardedLevel=true;save.completed=Array.from(new Set([...(save.completed||[]),levelIndex+1]));save.unlocked=Math.max(save.unlocked,Math.min(LEVELS.length,levelIndex+2));reward=50+levelIndex*5;earnCoins(reward,'level completed');persist();}notice.textContent=levelIndex===LEVELS.length-1?'You escaped every part of Ghostwood! Adventure complete!':'Level complete! Level '+(levelIndex+2)+' is now unlocked.';mission.textContent=levelIndex===LEVELS.length-1?'CAMPAIGN COMPLETE — you freed all the lost lanterns.':'LEVEL COMPLETE — continue through the gate to the next haunted area.';showLevelComplete(reward);}else{notice.textContent=!target?'The gate is sealed. Find all '+lanterns.length+' lanterns first.':boss&&!boss.defeated?'The guardian still lives! Defeat it with Ghost Pulse!':'The gate is sealed.';}}
+    if(frame%0.15<dt)updateUI();
+    updateAbilityUI();
+  }
+  function updateAbilityUI(){dashBtn.textContent=dashCooldown>0?'💨 DASH '+dashCooldown.toFixed(1)+'s':'💨 SPIRIT DASH';pulseBtn.textContent=pulseCooldown>0?'✨ PULSE '+pulseCooldown.toFixed(1)+'s':'✨ GHOST PULSE';dashBtn.disabled=dashCooldown>0||paused||won||lost;pulseBtn.disabled=pulseCooldown>0||paused||won||lost;}
+  function useDash(){if(paused||won||lost||dashCooldown>0)return;sfx('dash');let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);if(!dx&&!dy){dx=players[0].face||1;}const len=Math.hypot(dx,dy)||1;dx/=len;dy/=len;for(let n=0;n<7+(save.upgrades.dash||0)*2;n++){const nx=players[0].x+dx*13,ny=players[0].y+dy*13;if(solid(nx-5,ny-5)||solid(nx+5,ny+5))break;players[0].x=nx;players[0].y=ny;}dashCooldown=Math.max(1.5,4-(save.upgrades.dash||0)*.5);notice.textContent='Spirit Dash! You burst through the fog.';updateAbilityUI();}
+  function usePulse(){if(paused||won||lost||pulseCooldown>0)return;sfx('pulse');let pushed=0;if(boss&&!boss.defeated&&dist(players[0],boss)<155){boss.hp--;boss.hitFlash=.35;notice.textContent='GHOST PULSE HIT THE GUARDIAN! '+Math.max(0,boss.hp)+' strength left!';if(boss.hp<=0){boss.defeated=true;sfx('win');earnCoins(100+(levelIndex+1)*5,'guardian defeated');notice.textContent='GUARDIAN DEFEATED! The ancient gate is open!';}}for(const g of wraiths){const d=dist(players[0],g);if(d<125+(save.upgrades.pulse||0)*20){const len=d||1;g.dx=(g.x-players[0].x)/len;g.dy=(g.y-players[0].y)/len;g.x+=g.dx*34;g.y+=g.dy*34;pushed++;}}pulseCooldown=Math.max(3,8-(save.upgrades.pulse||0)*.7);if(pushed){save.ghosts=(save.ghosts||0)+pushed;earnCoins(pushed*5,'wraiths repelled');}notice.textContent=pushed?'Ghost Pulse pushed '+pushed+' wraith(s) away!':'Ghost Pulse sent a wave through the fog!';abilityStatus.textContent='Ghost Pulse recharges in 8 seconds.';updateAbilityUI();}
+  function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
+  function drawTree(x,y){rect(x+5,y+12,10,8,'#503b42');rect(x+2,y+5,16,13,'#183d3a');rect(x+5,y+1,10,10,'#24534a');rect(x+7,y+3,3,3,'#3d7460');}
+  function drawTomb(x,y){rect(x+4,y+7,12,11,'#677b7c');rect(x+6,y+3,8,8,'#8da1a0');rect(x+9,y+5,2,5,'#536a70');rect(x+7,y+8,6,2,'#536a70');rect(x+2,y+17,16,2,'#394f53');}
+  function drawLantern(l,sx,sy){const pulse=1+Math.sin(frame*4+l.phase)*.2;ctx.globalAlpha=.15;rect(sx-7*pulse,sy-7*pulse,14*pulse,14*pulse,'#f4df78');ctx.globalAlpha=1;rect(sx-3,sy-4,6,8,'#e5c75e');rect(sx-2,sy-3,4,6,'#fff3ae');rect(sx-2,sy-6,4,2,'#c4a64e');}
+  function drawPowerup(item,sx,sy){const bob=Math.sin(frame*4+item.phase)*2, color=item.type==='speed'?'#f4df78':'#76d8ff';ctx.globalAlpha=.2;rect(sx-9,sy-9+bob,18,18,color);ctx.globalAlpha=1;rect(sx-5,sy-5+bob,10,10,color);rect(sx-2,sy-7+bob,4,14,'#f7fbff');rect(sx-7,sy-2+bob,14,4,'#f7fbff');}
+  function drawPlayer(p,sx,sy,i){const bob=Math.sin(p.step)*1.5;rect(sx-6,sy-4+bob,12,10,p.color);rect(sx-5,sy+4+bob,10,4,p.accent);rect(sx-5,sy-7+bob,10,4,p.color);rect(sx-3,sy-10+bob,6,4,p.color);rect(sx-3,sy-2+bob,2,2,'#18252d');rect(sx+2,sy-2+bob,2,2,'#18252d');rect(sx-7,sy+2+bob,2,4,p.color);rect(sx+5,sy+2+bob,2,4,p.color);if(i===1){rect(sx-2,sy-13+bob,4,2,'#ffe3a0');}}
+  function drawWraith(g,sx,sy){const bob=Math.sin(frame*(g.type===1?6:4)+g.phase)*2,pal=[['#b9a8ff','#bcb0ff','#d8d1ff','#3a3567'],['#ff9aaf','#e86d91','#ffd1dc','#5d1838'],['#8fe7dc','#5ab8b2','#c9fff4','#123e45']][g.type||0];ctx.globalAlpha=.24;rect(sx-10,sy-9+bob,20,20,pal[0]);ctx.globalAlpha=.92;rect(sx-7,sy-6+bob,14,13,pal[1]);rect(sx-5,sy-9+bob,10,4,pal[2]);rect(sx-7,sy+4+bob,4,5,pal[1]);rect(sx,sy+3+bob,4,6,pal[1]);rect(sx+4,sy+4+bob,3,4,pal[1]);rect(sx-4,sy-2+bob,2,3,pal[3]);rect(sx+2,sy-2+bob,2,3,pal[3]);if(g.type===2){rect(sx-10,sy-12+bob,4,4,pal[2]);rect(sx+6,sy-12+bob,4,4,pal[2]);}ctx.globalAlpha=1;}
+  function drawBoss(b,sx,sy){const bob=Math.sin(b.phase)*4, body=b.hitFlash>0?'#fff1a8':'#6b3c87', glow=b.hitFlash>0?'#fff6cf':'#b879ff';ctx.globalAlpha=.22;rect(sx-25,sy-24+bob,50,50,glow);ctx.globalAlpha=1;rect(sx-17,sy-15+bob,34,30,body);rect(sx-13,sy-22+bob,26,10,glow);rect(sx-19,sy-9+bob,7,19,body);rect(sx+12,sy-9+bob,7,19,body);rect(sx-11,sy+12+bob,8,12,body);rect(sx+4,sy+12+bob,8,12,body);rect(sx-10,sy-5+bob,6,5,'#ffdc77');rect(sx+4,sy-5+bob,6,5,'#ffdc77');rect(sx-7,sy+5+bob,14,3,'#251a3c');ctx.globalAlpha=1;const bw=72,bx=sx-bw/2,by=sy-34+bob;rect(bx-2,by-2,bw+4,7,'#171321');rect(bx,by,bw,3,'#6b263c');rect(bx,by,bw*(Math.max(0,b.hp)/b.maxHp),3,'#ff6687');ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.fillStyle='#fff0d0';ctx.fillText(b.name,bx+bw/2,by-5);}
+  function render(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const focus=twoPlayers?{x:(players[0].x+players[1].x)/2,y:(players[0].y+players[1].y)/2}:players[0];
+    camera.x=Math.max(0,Math.min(W*TILE-canvas.width,focus.x-canvas.width/2));camera.y=Math.max(0,Math.min(H*TILE-canvas.height,focus.y-canvas.height/2));
+    const startX=Math.floor(camera.x/TILE),startY=Math.floor(camera.y/TILE),endX=Math.min(W,startX+Math.ceil(canvas.width/TILE)+2),endY=Math.min(H,startY+Math.ceil(canvas.height/TILE)+2);
+    const level=LEVELS[levelIndex];
+    for(let ty=startY;ty<endY;ty++)for(let tx=startX;tx<endX;tx++){const x=tx*TILE-camera.x,y=ty*TILE-camera.y;rect(x,y,TILE,TILE,(tx+ty)%2?level.floorA:level.floorB);if((tx*7+ty*13)%9===0)rect(x+4,y+14,2,2,'#66806c');if(world[ty][tx]===1){if((tx*5+ty*3)%4===0)drawTomb(x,y);else drawTree(x,y);} }
+    // Gentle biome tint shifts every five levels so the forest feels like it changes as you travel.
+    const biomeTints=['rgba(36,120,91,.08)','rgba(75,95,180,.12)','rgba(130,65,150,.12)','rgba(180,85,48,.10)','rgba(80,110,45,.12)'];
+    ctx.fillStyle=biomeTints[Math.floor(levelIndex/5)%biomeTints.length];ctx.fillRect(0,0,canvas.width,canvas.height);
+    // Portal is visible even before it unlocks.
+    const gate={x:(W-6)*TILE+10-camera.x,y:(H-6)*TILE+10-camera.y};ctx.globalAlpha=.18+Math.sin(frame*3)*.06;rect(gate.x-14,gate.y-15,28,30,'#9c65f3');ctx.globalAlpha=1;rect(gate.x-9,gate.y-13,18,25,'#6445a4');rect(gate.x-6,gate.y-10,12,20,lanterns.every(l=>l.got)?'#c6a6ff':'#302a54');rect(gate.x-2,gate.y-7,4,4,'#f1ddff');rect(gate.x-12,gate.y+12,24,3,'#9272c7');
+    for(const l of lanterns)if(!l.got)drawLantern(l,l.x-camera.x,l.y-camera.y);
+    for(const item of powerups)if(!item.got)drawPowerup(item,item.x-camera.x,item.y-camera.y);
+    for(const g of wraiths)drawWraith(g,g.x-camera.x,g.y-camera.y);
+    if(boss&&!boss.defeated)drawBoss(boss,boss.x-camera.x,boss.y-camera.y);
+    for(let i=0;i<(twoPlayers?2:1);i++)drawPlayer(players[i],players[i].x-camera.x,players[i].y-camera.y,i);
+    // Fog vignette and mini-map.
+    const grad=ctx.createRadialGradient(canvas.width/2,canvas.height/2,70,canvas.width/2,canvas.height/2,350);grad.addColorStop(0,'rgba(8,15,26,0)');grad.addColorStop(1,'rgba(5,11,20,.40)');ctx.fillStyle=grad;ctx.fillRect(0,0,canvas.width,canvas.height);
+    if(showMap){const mw=108,mh=80,mx=canvas.width-mw-10,my=10;ctx.globalAlpha=.9;rect(mx-3,my-3,mw+6,mh+6,'#0a151a');rect(mx,my,mw,mh,'#203a34');const sx=mw/(W*TILE),sy=mh/(H*TILE);for(let ty=0;ty<H;ty+=2)for(let tx=0;tx<W;tx+=2)if(world[ty][tx])rect(mx+tx*TILE*sx,my+ty*TILE*sy,2,2,'#66806c');for(const l of lanterns)if(!l.got)rect(mx+l.x*sx-1,my+l.y*sy-1,3,3,'#ffe78c');rect(mx+gate.x*sx-2,my+gate.y*sy-2,4,4,'#bc8cff');for(let i=0;i<(twoPlayers?2:1);i++)rect(mx+players[i].x*sx-2,my+players[i].y*sy-2,4,4,players[i].accent);ctx.globalAlpha=1;}
+    if(paused||won||lost){ctx.fillStyle='rgba(8,14,22,.76)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.textAlign='center';ctx.fillStyle='#f3edcf';ctx.font='bold 26px monospace';ctx.fillText(paused?'PAUSED':won?'GHOSTWOOD ESCAPED!':'LOST IN THE FOG',canvas.width/2,canvas.height/2-8);ctx.font='12px monospace';ctx.fillStyle='#c5c0f6';ctx.fillText(paused?'Press P or Resume to continue':'Press RESTART to play again',canvas.width/2,canvas.height/2+20);}
+  }
+  function showLevelComplete(reward){
+    const modal=document.getElementById('levelModal');
+    document.getElementById('modalLanterns').textContent=lanterns.filter(l=>l.got).length+'/'+lanterns.length;
+    document.getElementById('modalCoins').textContent='+'+reward;
+    document.getElementById('modalLevel').textContent=levelIndex===LEVELS.length-1?'DONE':(levelIndex+2)+'/'+LEVELS.length;
+    document.getElementById('levelModalTitle').textContent=levelIndex===LEVELS.length-1?'ADVENTURE COMPLETE!':'LEVEL '+(levelIndex+1)+' COMPLETE!';
+    document.getElementById('levelModalMessage').textContent=levelIndex===LEVELS.length-1?'You rescued every lost lantern in Ghostwood!':'The gate opens. A new haunted area awaits you.';
+    document.getElementById('modalContinue').textContent=levelIndex===LEVELS.length-1?'FINISH ADVENTURE ✓':'NEXT LEVEL ➜';
+    modal.classList.add('show');syncMenuStats();
+  }
+  function continueAfterWin(){if(!won)return;document.getElementById('levelModal').classList.remove('show');if(levelIndex===LEVELS.length-1){menu.classList.remove('menu-hide');showPanel('ADVENTURE COMPLETE','<p>You finished all 100 levels! Thanks for saving Ghostwood’s lost lanterns.</p>');syncMenuStats();return;}levelIndex=Math.min(save.unlocked-1,levelIndex+1);reset();notice.textContent='Welcome to '+LEVELS[levelIndex].name.toLowerCase()+'!';}
+  document.getElementById('modalContinue').addEventListener('click',continueAfterWin);
+  document.getElementById('modalMenu').addEventListener('click',()=>{document.getElementById('levelModal').classList.remove('show');menu.classList.remove('menu-hide');syncMenuStats();});
+  function updateUI(){const got=lanterns.filter(l=>l.got).length;countEl.textContent=got;bar.style.width=(got/lanterns.length*100)+'%';livesEl.textContent='♥ '.repeat(players[0].lives).trim()+(twoPlayers?'  ·  ♥ '.repeat(players[1].lives):'');modeLabel.textContent=twoPlayers?'2 PLAYER':'1 PLAYER';where.textContent='LOCATION: '+LEVELS[levelIndex].name;}
+  window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();if(k==='shift'&&!keys.shift)useDash();if(k===' '&&!keys[' '])usePulse();keys[k]=true;if(k==='p'){paused=!paused;document.getElementById('pause').textContent=paused?'▶ RESUME':'Ⅱ PAUSE';updateAbilityUI();}if(k==='m'){showMap=!showMap;document.getElementById('map').textContent='MAP: '+(showMap?'ON':'OFF');}});
+  window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+  window.addEventListener('blur',()=>{keys={};});
+  document.querySelectorAll('[data-move]').forEach(button=>{
+    const key=button.dataset.move;
+    const down=e=>{e.preventDefault();keys[key]=true;};
+    const up=e=>{e.preventDefault();keys[key]=false;};
+    button.addEventListener('pointerdown',down);
+    button.addEventListener('pointerup',up);
+    button.addEventListener('pointercancel',up);
+    button.addEventListener('lostpointercapture',up);
+    button.addEventListener('contextmenu',e=>e.preventDefault());
+  });
+  document.getElementById('restart').addEventListener('click',reset);
+  dashBtn.addEventListener('click',useDash);
+  pulseBtn.addEventListener('click',usePulse);
+  nextLevelBtn.addEventListener('click',continueAfterWin);
+  document.getElementById('two').addEventListener('click',()=>{twoPlayers=!twoPlayers;document.getElementById('two').textContent=twoPlayers?'1 PLAYER':'2 PLAYER';notice.textContent=twoPlayers?'Player 2 joined! Use I J K L to move.':'Player 2 left the adventure.';updateUI();});
+  document.getElementById('map').addEventListener('click',()=>{showMap=!showMap;document.getElementById('map').textContent='MAP: '+(showMap?'ON':'OFF');});
+  document.getElementById('pause').addEventListener('click',()=>{paused=!paused;document.getElementById('pause').textContent=paused?'▶ RESUME':'Ⅱ PAUSE';});
+  const menu=document.getElementById('mainMenu'), panel=document.getElementById('menuPanel');
+  function showPanel(title,html){panel.innerHTML='<h3>'+title+'</h3>'+html;syncMenuStats();}
+  function startLevel(n){if(n<0||n>=save.unlocked){showPanel('Level Locked','Beat the previous level to unlock this one. You must play in order!');return;}levelIndex=n;menu.classList.add('menu-hide');reset();levelStarted=true;}
+  document.getElementById('soundToggle').addEventListener('click',e=>{soundOn=!soundOn;e.currentTarget.textContent=soundOn?'🔊 SOUND: ON':'🔇 SOUND: OFF';e.currentTarget.setAttribute('aria-pressed',String(soundOn));if(soundOn){audioReady();sfx('click');if(musicOn)startMusic();}else stopMusic();});
+  document.getElementById('musicToggle').addEventListener('click',e=>{musicOn=!musicOn;e.currentTarget.textContent=musicOn?'🎵 MUSIC: ON':'🎵 MUSIC: OFF';e.currentTarget.setAttribute('aria-pressed',String(musicOn));if(musicOn){soundOn=true;document.getElementById('soundToggle').textContent='🔊 SOUND: ON';document.getElementById('soundToggle').setAttribute('aria-pressed','true');audioReady();startMusic();}else stopMusic();sfx('click');});
+  document.getElementById('mainMenu').addEventListener('click',e=>{if(e.target.closest('button'))sfx('click');});
+  document.getElementById('menuPlay').addEventListener('click',()=>startLevel(Math.min(save.unlocked-1,Math.max(0,(save.completed||[]).length))));
+  document.getElementById('menuLevels').addEventListener('click',()=>{let html='<p>Choose a level. Locked levels cannot be started until you beat the level before them.</p><div class="menu-grid">';for(let i=0;i<LEVELS.length;i++){const open=i<save.unlocked,done=(save.completed||[]).includes(i+1);html+=`<button ${open?'':'disabled'} class="${open?'':'locked'}" data-level="${i}">${done?'✓ ':open?'▶ ':'🔒 '}Level ${i+1}</button>`;}html+='</div>';showPanel('LEVEL SELECT · '+save.unlocked+'/'+LEVELS.length+' UNLOCKED',html);panel.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>startLevel(Number(b.dataset.level))));});
+  document.getElementById('menuUpgrades').addEventListener('click',()=>{const labels={health:'❤️ Extra Health',speed:'⚡ Super Speed',dash:'💨 Shadow Dash',pulse:'✨ Ghost Pulse'};let html=`<p>Coins: <b class="coin-badge">${save.coins}</b>. Upgrades persist when you leave the game.</p>`;for(const k of Object.keys(labels)){const cost=upgradeCost(k),level=save.upgrades[k]||0;html+=`<div><b>${labels[k]}</b> · Level ${level} <button data-upgrade="${k}" ${save.coins<cost?'disabled':''}>Upgrade · ${cost} coins</button></div>`;}showPanel('UPGRADE WORKSHOP',html);panel.querySelectorAll('[data-upgrade]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.upgrade,c=upgradeCost(k);if(save.coins<c)return;save.coins-=c;save.upgrades[k]=(save.upgrades[k]||0)+1;persist();document.getElementById('menuUpgrades').click();}));});
+  document.getElementById('menuShop').addEventListener('click',()=>showPanel('GHOST COIN SHOP',`
+    <p>Earn Ghost Coins for free by collecting lanterns, repelling ghosts, and finishing levels.</p>
+    <p><b>Real-money bundles</b> · Proposed packs for the mobile version. Planned prices in USD; Apple or Google will display the actual localized price before purchase.</p>
+    <div class="menu-grid" style="margin:12px 0">
+      <div style="padding:12px;border:1px solid #6c8e87;background:#172a31;border-radius:8px"><div style="font-size:26px">🪙</div><b>Starter Pouch</b><p>500 Ghost Coins</p><p><b>$0.99</b></p><button data-realpack="starter" disabled>Unavailable in browser</button></div>
+      <div style="padding:12px;border:1px solid #6c8e87;background:#172a31;border-radius:8px"><div style="font-size:26px">💰</div><b>Haunted Hoard</b><p>1,500 Ghost Coins</p><p><b>$2.99</b></p><button data-realpack="hoard" disabled>Unavailable in browser</button></div>
+      <div style="padding:12px;border:1px solid #6c8e87;background:#172a31;border-radius:8px"><div style="font-size:26px">🧰</div><b>Legendary Treasure</b><p>5,000 Ghost Coins</p><p><b>$7.99</b></p><button data-realpack="legendary" disabled>Unavailable in browser</button></div>
+      <div style="padding:12px;border:1px solid #6c8e87;background:#172a31;border-radius:8px"><div style="font-size:26px">💎</div><b>Phantom Fortune</b><p>12,000 Ghost Coins</p><p><b>$14.99</b></p><button data-realpack="phantom" disabled>Unavailable in browser</button></div>
+    </div>
+    <p class="small">Real-money purchases are not active yet. This HTML prototype has no secure app-store billing, receipt verification, or refund handling, so these buttons stay disabled and cannot charge anyone.</p>
+    <button id="restorePurchases" class="secondary" disabled>RESTORE PURCHASES · MOBILE VERSION</button>
+    <hr style="border-color:#38575a;margin:14px 0">
+    <p><b>Testing only:</b> use this button to test the in-game coin balance without spending money.</p>
+    <button id="freeCoins" class="secondary">Claim test coins (+100)</button>`));
+  panel.addEventListener('click',e=>{if(e.target.id==='restorePurchases'){notice.textContent='Restore purchases will be available in the native mobile app.';}});
+  document.getElementById('menuCostumes').addEventListener('click',()=>{
+    let html=`<p>Choose your explorer look. Owned costumes are free to equip. Coins: <b class="coin-badge">${save.coins}</b>.</p><div class="menu-grid">`;
+    for(const [id,c] of Object.entries(COSTUMES)){const owned=(save.ownedCostumes||[]).includes(id),equipped=save.costume===id;html+=`<div style="padding:10px;border:1px solid #5d7b78;background:#1b3038"><div style="height:12px;background:${c.color};border:2px solid ${c.accent};margin-bottom:8px"></div><b>${c.name}</b><p style="font-size:10px">${c.description}</p><button data-costume="${id}" ${equipped?'disabled':''}>${equipped?'EQUIPPED':owned?'EQUIP':'BUY · '+c.price+' COINS'}</button></div>`;}
+    html+='</div>';showPanel('CHARACTER & COSTUME SHOP',html);
+    panel.querySelectorAll('[data-costume]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.costume,c=COSTUMES[id];if(!c)return;const owned=(save.ownedCostumes||[]).includes(id);if(!owned){if(save.coins<c.price){showPanel('NOT ENOUGH COINS',`<p>You need ${c.price-save.coins} more Ghost Coins for ${c.name}. Collect lanterns and complete levels to earn more.</p>`);return;}save.coins-=c.price;save.ownedCostumes.push(id);}save.costume=id;persist();applyCostumeToPlayers();document.getElementById('menuCostumes').click();}));
+  });
+  document.getElementById('menuInventory').addEventListener('click',()=>showPanel('INVENTORY',`<p>🏮 Lanterns collected: ${save.lanterns||0}</p><p>👻 Wraiths repelled: ${save.ghosts||0}</p><p>🪙 Ghost Coins: ${save.coins}</p><p>🛡 Spirit Shield and Speed Spark are found during levels.</p>`));
+  document.getElementById('menuAchievements').addEventListener('click',()=>showPanel('ACHIEVEMENTS',`<p>${(save.completed||[]).length>=1?'✓':'○'} First Steps — complete your first level</p><p>${(save.lanterns||0)>=50?'✓':'○'} Lantern Keeper — collect 50 lanterns</p><p>${(save.unlocked||1)>=10?'✓':'○'} Deep in the Woods — unlock level 10</p><p>${(save.unlocked||1)>=100?'✓':'○'} Lantern Legend — unlock level 100</p>`));
+  document.getElementById('menuHow').addEventListener('click',()=>showPanel('HOW TO PLAY','<p>Move with WASD or arrow keys. Collect every lantern, avoid wraiths, and reach the purple gate. Press Shift for Spirit Dash and Space for Ghost Pulse. Earn coins to upgrade your abilities. Beat each level to unlock the next one.</p>'));
+  panel.addEventListener('click',e=>{if(e.target.id==='freeCoins'){save.coins+=100;persist();showPanel('TEST COINS ADDED','100 starter coins were added for testing.');}});
+  syncMenuStats();
+  function loop(t){const dt=Math.min(.04,(t-lastTime)/1000||0);lastTime=t;update(dt);render();requestAnimationFrame(loop);}
+  reset();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
